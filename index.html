@@ -108,5 +108,26 @@
       });
     });
   </script>
+  <script>
+    async function sendDataToServer(data) {
+      const response = await fetch("/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tableData: data })
+      });
+      const result = await response.json();
+      alert(result.message);
+    }
+  
+    function saveTableData() {
+      const rows = document.querySelectorAll("#table-ungvien tbody tr");
+      const data = Array.from(rows).map(row => {
+        const cells = row.querySelectorAll("td:nth-child(-n+7)");
+        return Array.from(cells).map(cell => cell.textContent.trim());
+      });
+      sendDataToServer(data);
+    }
+  </script>
+  
 </body>
 </html>
