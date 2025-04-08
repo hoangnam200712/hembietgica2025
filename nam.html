@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Danh Sách Ứng Viên</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background-color: #fff;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+      vertical-align: middle;
+    }
+    th {
+      background-color: #eaeaea;
+    }
+    /* Màu mặc định cho hàng */
+    tr[data-color="default"] {
+      background-color: #fff;
+    }
+    /* Màu vàng */
+    tr[data-color="yellow"] {
+      background-color: #fff8b2;
+    }
+    /* Màu xanh */
+    tr[data-color="green"] {
+      background-color: #a5f2a5;
+    }
+    .btn {
+      padding: 6px 12px;
+      font-size: 14px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-yellow {
+      background-color: #ffe066;
+      margin-right: 5px;
+    }
+    .btn-green {
+      background-color: #88d18a;
+      margin-right: 5px;
+    }
+    .btn-edit {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .btn-delete {
+      background-color: #f44336;
+      color: white;
+    }
+    /* Nút Thêm dòng (nếu cần) */
+    .btn-add {
+      margin: 10px 0;
+      padding: 8px 16px;
+      background-color: #2196F3;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <h1>Danh Sách Ứng Viên</h1>
+  <!-- Nút cho phép người dùng thêm dòng mới -->
+  <button class="btn btn-add" onclick="addNewRow()">Thêm dòng mới</button>
+  <table id="table-ungvien">
+    <thead>
+      <tr>
+        <th>Họ và Tên</th>
+        <th>Số Điện Thoại</th>
+        <th>Tình Trạng</th>
+        <th>Liên Hệ Lại</th>
+        <th>Ngày Phỏng Vấn</th>
+        <th>Công Ty</th>
+        <th>Loại</th>
+        <th>Đổi Màu</th>
+        <th>Chỉnh Sửa</th>
+        <th>Xóa</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Bảng sẽ được dựng lại từ dữ liệu Local Storage (chỉ dòng có dữ liệu sẽ được hiển thị) -->
+    </tbody>
+  </table>
+
+  <script>
+    /**
+     * Lưu dữ liệu bảng vào Local Storage với key "applicantsData".
+     * Dữ liệu là mảng các đối tượng gồm:
+     * - color: màu nền,
+     * - cells: mảng chứa nội dung 7 ô dữ liệu.
+     */
+    function saveTableData() {
+      const tbody = document.querySelector("#table-ungvien tbody");
+      const rows = tbody.rows;
+      let data = [];
+      for (let row of rows) {
+        let rowData = {
+          color: row.getAttribute("data-color") || "default",
+          cells: []
+        };
+        // Lấy 7 ô đầu (dữ liệu chỉnh sửa)
+        for (let i = 0; i < 7; i++) {
+          rowData.cells.push(row.cells[i].textContent);
+        }
+        // Chỉ lưu dòng nếu có ít nhất 1 ô có nội dung (không phải trắng)
+        if (rowData.cells.some(cell => cell.trim() !== "")) {
+          data.push(rowData);
+        }
+      }
+      localStorage.setItem("applicantsData", JSON.stringify(data));
+    }
+
+    /**
+     * Xây dựng lại bảng từ dữ liệu có trong Local Storage.
+     * Chỉ những dòng có dữ liệu mới được dựng.
+     */
+    function loadTableData() {
+      const savedData = localStorage.getItem("applicantsData");
+      const tbody = document.querySelector("#table-ungvien tbody");
+      tbody.innerHTML = ""; // Xoá nội dung cũ
+      if (savedData) {
+        const data = JSON.parse(savedData);
+        data.forEach(rowData => {
+          const isEmpty = rowData.cells.every(cell => cell.trim() === "");
+          if (!isEmpty) {
+            const tr = document.createElement("tr");
+            tr.setAttribute("data-color", rowData.color);
+            // Tạo 7 ô chứa dữ liệu và set contenteditable = false
+            rowData.cells.forEach(cellText => {
+              const td = document.createElement("td");
+              td.textContent = cellText;
+              td.setAttribute("contenteditable", "false");
+              tr.appendChild(td);
+            });
+            // Cột Đổi màu
+            const tdColor = document.createElement("td");
+            const btnYellow = document.createElement("button");
+            btnYellow.className = "btn btn-yellow";
+            btnYellow.textContent = "Vàng";
+            btnYellow.onclick = function(){
+              changeRowColor(btnYellow, 'yellow');
+            };
+            const btnGreen = document.createElement("button");
+            btnGreen.className = "btn btn-green";
+            btnGreen.textContent = "Xanh";
+            btnGreen.onclick = function(){
+              changeRowColor(btnGreen, 'green');
+            };
+            tdColor.appendChild(btnYellow);
+            tdColor.appendChild(btnGreen);
+            tr.appendChild(tdColor);
+            // Cột Chỉnh sửa
+            const tdEdit = document.createElement("td");
+            const btnEdit = document.createElement("button");
+            btnEdit.className = "btn btn-edit";
+            btnEdit.textContent = "Sửa";
+            btnEdit.onclick = function(){
+              toggleEdit(btnEdit);
+            };
+            tdEdit.appendChild(btnEdit);
+            tr.appendChild(tdEdit);
+            // Cột Xóa
+            const tdDelete = document.createElement("td");
+            const btnDelete = document.createElement("button");
+            btnDelete.className = "btn btn-delete";
+            btnDelete.textContent = "Xóa";
+            btnDelete.onclick = function(){
+              deleteRow(btnDelete);
+            };
+            tdDelete.appendChild(btnDelete);
+            tr.appendChild(tdDelete);
+
+            tbody.appendChild(tr);
+          }
+        });
+      }
+    }
+
+    /**
+     * Thêm một dòng mới rỗng vào bảng.
+     * Dòng mới được thêm dưới cùng, với 7 ô dữ liệu rỗng (mở chế độ chỉnh sửa ngay từ đầu).
+     */
+    function addNewRow() {
+      const tbody = document.querySelector("#table-ungvien tbody");
+      const tr = document.createElement("tr");
+      tr.setAttribute("data-color", "default");
+      for (let i = 0; i < 7; i++) {
+        const td = document.createElement("td");
+        td.textContent = "";
+        td.setAttribute("contenteditable", "true");
+        td.style.border = "1px dashed #000";
+        td.style.backgroundColor = "#eef";
+        tr.appendChild(td);
+      }
+      // Cột Đổi màu
+      const tdColor = document.createElement("td");
+      const btnYellow = document.createElement("button");
+      btnYellow.className = "btn btn-yellow";
+      btnYellow.textContent = "Vàng";
+      btnYellow.onclick = function(){
+        changeRowColor(btnYellow, 'yellow');
+      };
+      const btnGreen = document.createElement("button");
+      btnGreen.className = "btn btn-green";
+      btnGreen.textContent = "Xanh";
+      btnGreen.onclick = function(){
+        changeRowColor(btnGreen, 'green');
+      };
+      tdColor.appendChild(btnYellow);
+      tdColor.appendChild(btnGreen);
+      tr.appendChild(tdColor);
+      // Cột Chỉnh sửa
+      const tdEdit = document.createElement("td");
+      const btnEdit = document.createElement("button");
+      btnEdit.className = "btn btn-edit";
+      btnEdit.textContent = "Lưu";
+      btnEdit.onclick = function(){
+        toggleEdit(btnEdit);
+      };
+      tdEdit.appendChild(btnEdit);
+      tr.appendChild(tdEdit);
+      // Cột Xóa
+      const tdDelete = document.createElement("td");
+      const btnDelete = document.createElement("button");
+      btnDelete.className = "btn btn-delete";
+      btnDelete.textContent = "Xóa";
+      btnDelete.onclick = function(){
+        deleteRow(btnDelete);
+      };
+      tdDelete.appendChild(btnDelete);
+      tr.appendChild(tdDelete);
+
+      tbody.appendChild(tr);
+      saveTableData();
+    }
+
+    // Hàm thay đổi màu hàng: Sau khi chuyển màu thì lưu dữ liệu lại
+    function changeRowColor(btn, color) {
+      const row = btn.closest('tr');
+      row.setAttribute('data-color', color);
+      saveTableData();
+    }
+
+    /**
+     * Hàm chuyển đổi chế độ chỉnh sửa cho dòng và lưu lại thay đổi.
+     * Sau khi nhấn "Lưu", nếu dòng bị bỏ trống thì sẽ bị xóa.
+     */
+    function toggleEdit(btn) {
+      const row = btn.closest('tr');
+      const cells = row.querySelectorAll("td:nth-child(-n+7)");
+      const isEditing = cells[0].getAttribute("contenteditable") === "true";
+
+      if (!isEditing) {
+        // Bật chỉnh sửa
+        cells.forEach(cell => {
+          cell.setAttribute("contenteditable", "true");
+          cell.style.border = "1px dashed #000";
+          cell.style.backgroundColor = "#eef";
+        });
+        btn.textContent = "Lưu";
+      } else {
+        // Tắt chỉnh sửa, lưu lại và kiểm tra dòng trống
+        cells.forEach(cell => {
+          cell.setAttribute("contenteditable", "false");
+          cell.style.border = "";
+          cell.style.backgroundColor = "";
+        });
+        btn.textContent = "Sửa";
+        saveTableData();
+        removeEmptyRows();
+      }
+    }
+
+    /**
+     * Xóa dòng chứa nút Xóa và cập nhật Local Storage.
+     */
+    function deleteRow(btn) {
+      const row = btn.closest('tr');
+      row.remove();
+      saveTableData();
+    }
+
+    /**
+     * Loại bỏ các dòng không có dữ liệu (tất cả 7 ô đều trống) khỏi bảng.
+     */
+    function removeEmptyRows() {
+      const tbody = document.querySelector("#table-ungvien tbody");
+      const rows = Array.from(tbody.rows);
+      rows.forEach(row => {
+        const cells = row.querySelectorAll("td:nth-child(-n+7)");
+        const isEmpty = Array.from(cells).every(cell => cell.textContent.trim() === "");
+        if (isEmpty) {
+          row.remove();
+        }
+      });
+      saveTableData();
+    }
+
+    // Khi load trang, dựng lại bảng từ Local Storage
+    document.addEventListener("DOMContentLoaded", function() {
+      loadTableData();
+    });
+  </script>
+</body>
+</html>

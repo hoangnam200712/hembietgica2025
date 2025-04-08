@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Danh sách thư mục</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .folder-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .folder {
+      text-align: center;
+      text-decoration: none;
+      color: #000;
+      background-color: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    .folder:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .folder-icon {
+      font-size: 48px;
+    }
+    .folder-name {
+      margin-top: 10px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Danh sách thư mục</h1>
+  <div class="folder-container">
+    <a href="nam.html" class="folder">
+      <div class="folder-icon">&#128193;</div>
+      <div class="folder-name">Nam
+      </div>
+    </a>
+    <a href="Documents.html" class="folder">
+      <div class="folder-icon">&#128193;</div>
+      <div class="folder-name">Documents</div>
+    </a>
+    <a href="Downloads.html" class="folder">
+      <div class="folder-icon">&#128193;</div>
+      <div class="folder-name">Downloads</div>
+    </a>
+    <a href="Music.html" class="folder">
+      <div class="folder-icon">&#128193;</div>
+      <div class="folder-name">Music</div>
+    </a>
+    <a href="Pictures.html" class="folder">
+      <div class="folder-icon">&#128193;</div>
+      <div class="folder-name">Pictures</div>
+    </a>
+    <a href="Videos.html" class="folder">
+      <div class="folder-icon">&#128193;</div>
+      <div class="folder-name">Videos</div>
+    </a>
+  </div>
+
+  <script>
+    // Lắng nghe sự kiện click cho tất cả các thư mục
+    document.querySelectorAll('.folder').forEach(folder => {
+      folder.addEventListener('click', function(event) {
+        event.preventDefault();  // Chặn chuyển hướng mặc định
+        const folderName = folder.querySelector('.folder-name').textContent.trim();
+        const storageKey = folderName + "Password";
+        const targetHref = folder.getAttribute("href");
+        const storedPass = localStorage.getItem(storageKey);
+        
+        if (!storedPass) {
+          // Nếu chưa có mật khẩu, yêu cầu đặt mật khẩu
+          let newPass = prompt(`Chưa có mật khẩu cho "${folderName}". Vui lòng nhập mật khẩu mới:`);
+          if (newPass && newPass.trim() !== "") {
+            localStorage.setItem(storageKey, newPass);
+            alert("Mật khẩu đã được thiết lập cho " + folderName + ".");
+            // Sau khi đặt mật khẩu, chuyển hướng sang trang tương ứng
+            window.location.href = targetHref;
+          } else {
+            alert("Mật khẩu không được để trống!");
+          }
+        } else {
+          // Nếu đã có mật khẩu, yêu cầu người dùng nhập mật khẩu để truy cập
+          let inputPass = prompt(`Nhập mật khẩu để truy cập "${folderName}":`);
+          if (inputPass === storedPass) {
+            window.location.href = targetHref;
+          } else {
+            alert("Mật khẩu không chính xác!");
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>
